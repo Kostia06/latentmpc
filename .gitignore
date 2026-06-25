@@ -1,3 +1,5 @@
 model.pt
 __pycache__/
 *.pyc
+/demo.gif
+/imagine.gif
