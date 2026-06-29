@@ -51,9 +51,29 @@ Single file, ~180 lines, no simulator/GL dependencies.
 - **Hidden-state inference**: the encoder recovers velocity from a pair of frames.
 - **Zero-shot goals**: solved by *planning*, not a memorized policy.
 
+## Scaling to DeepMind Control (in progress)
+
+I extended this to a real robot environment — DeepMind Control `reacher` (a 2-link arm,
+torque control, learning from rendered MuJoCo pixels via headless EGL). The whole pipeline
+works end to end: GPU rendering, data collection, the latent world model trains, and the
+`z → to_target` readout is accurate.
+
+**It runs into the problem that *defines* model-based RL: model exploitation.** On the arm's
+nonlinear dynamics the world model isn't accurate enough over a multi-step rollout, so the CEM
+planner finds action sequences that *fool the model* into predicting success while the real
+arm never reaches the target — performing **below random** (confidently wrong). This is
+exactly the failure mode that **Dreamer** and **TD-MPC2** are designed to fix, with machinery
+this minimal planner deliberately lacks:
+
+- **Model ensembles + uncertainty penalties** — don't trust the model where it's unsure.
+- **A learned value function** — guide planning beyond a short, error-compounding horizon.
+
+So the toy domain is solved cleanly; scaling to real control needs value-guided planning.
+That's the next build — and knowing *why* the simple version breaks is the whole point.
+
 ## Roadmap
 
-- Swap the toy env for **DeepMind Control** (cheetah / robot arm) for a portfolio-grade demo.
-- Replace the readout with a **from-scratch JEPA encoder** (masking + EMA target).
-- **LLM goal layer**: type *"go to the top-left"* → it plans there.
-- Weights & Biases logging + ablations (horizon, latent dim, multi-step depth).
+- **Value-guided latent planning (TD-MPC2-style)** to beat model exploitation on DeepMind Control.
+- **From-scratch JEPA encoder** (masking + EMA target) in place of the readout.
+- **LLM goal layer**: type *"reach the top-left"* → it plans there.
+- **Weights & Biases** logging + ablations (horizon, latent dim, multi-step depth).
